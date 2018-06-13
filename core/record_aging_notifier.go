@@ -19,7 +19,7 @@ type recordAgingNotifier struct {
 	logger        *logging.Logger
 	runCount      int
 	watchdogTimer *time.Ticker
-	stopWorker    chan bool
+	stopWorker    chan struct{}
 }
 
 func (n *OpenBazaarNode) StartRecordAgingNotifier() {
@@ -36,7 +36,7 @@ func (notifier *recordAgingNotifier) RunCount() int { return notifier.runCount }
 
 func (notifier *recordAgingNotifier) Run() {
 	notifier.watchdogTimer = time.NewTicker(notifier.intervalDelay)
-	notifier.stopWorker = make(chan bool)
+	notifier.stopWorker = make(chan struct{})
 
 	// Run once on start, then wait for watchdog
 	notifier.PerformTask()
@@ -52,7 +52,6 @@ func (notifier *recordAgingNotifier) Run() {
 }
 
 func (notifier *recordAgingNotifier) Stop() {
-	notifier.stopWorker <- true
 	close(notifier.stopWorker)
 }
 
