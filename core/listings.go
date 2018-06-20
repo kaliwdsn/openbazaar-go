@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	ListingVersion           = 3
+	ListingVersion           = 4
 	TitleMaxCharacters       = 140
 	ShortDescriptionLength   = 160
 	DescriptionMaxCharacters = 50000
@@ -43,6 +43,8 @@ const (
 	MaxCountryCodes          = 255
 	EscrowTimeout            = 1080
 	SlugBuffer               = 5
+	PriceModifierMin         = -99.99
+	PriceModifierMax         = 1000.00
 
 	DefaultCoinDivisibility uint32 = 1e8
 )
@@ -1242,6 +1244,18 @@ func validateCryptocurrencyListing(listing *pb.Listing) error {
 func validateMarketPriceListing(listing *pb.Listing) error {
 	if listing.Item.Price > 0 {
 		return ErrMarketPriceListingIllegalField("item.price")
+	}
+
+	if listing.Metadata.PriceModifier != 0 {
+		listing.Metadata.PriceModifier = float32(int(listing.Metadata.PriceModifier*100.0)) / 100.0
+	}
+
+	if listing.Metadata.PriceModifier < PriceModifierMin ||
+		listing.Metadata.PriceModifier > PriceModifierMax {
+		return ErrPriceModifierOutOfRange{
+			Min: PriceModifierMin,
+			Max: PriceModifierMax,
+		}
 	}
 
 	return nil
