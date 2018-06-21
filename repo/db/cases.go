@@ -45,6 +45,13 @@ func (c *CasesDB) PutRecord(dispute *repo.DisputeCaseRecord) error {
 		contract = dispute.VendorContract
 	}
 
+	// Newer orders whould include a payment coin. Orders before payment coin was
+	// included use the first accepted coin from the first listing
+	paymentCoin := contract.VendorListings[0].Metadata.AcceptedCurrencies[0]
+	if contract.BuyerOrder.Payment.Coin != "" {
+		paymentCoin = contract.BuyerOrder.Payment.Coin
+	}
+
 	defer stmt.Close()
 	_, err = stmt.Exec(
 		dispute.CaseID,
@@ -56,9 +63,7 @@ func (c *CasesDB) PutRecord(dispute *repo.DisputeCaseRecord) error {
 		"",
 		"",
 		contract.VendorListings[0].Metadata.CoinType,
-
-		// TODO: Figure out which coin is the payment coin
-		"",
+		paymentCoin,
 	)
 	if err != nil {
 		rErr := tx.Rollback()

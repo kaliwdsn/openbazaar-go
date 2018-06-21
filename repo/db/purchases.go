@@ -42,7 +42,7 @@ func (p *PurchasesDB) Put(orderID string, contract pb.RicardianContract, state p
 	if err != nil {
 		return err
 	}
-	stm := `insert or replace into purchases(orderID, contract, state, read, timestamp, total, thumbnail, vendorID, vendorHandle, title, shippingName, shippingAddress, paymentAddr, coinType, paymentCoin, funded, transactions) values(?,?,?,?,?,?,?,?,?,?,?,?,?,(select funded from purchases where orderID="` + orderID + `"),(select transactions from purchases where orderID="` + orderID + `"))`
+	stm := `insert or replace into purchases(orderID, contract, state, read, timestamp, total, thumbnail, vendorID, vendorHandle, title, shippingName, shippingAddress, paymentAddr, coinType, paymentCoin, funded, transactions) values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,(select funded from purchases where orderID="` + orderID + `"),(select transactions from purchases where orderID="` + orderID + `"))`
 	stmt, err := tx.Prepare(stm)
 	if err != nil {
 		return err
@@ -60,6 +60,12 @@ func (p *PurchasesDB) Put(orderID string, contract pb.RicardianContract, state p
 	} else if contract.BuyerOrder.Payment.Method == pb.Order_Payment_ADDRESS_REQUEST {
 		paymentAddr = contract.VendorOrderConfirmation.PaymentAddress
 	}
+
+	paymentCoin := contract.VendorListings[0].Metadata.AcceptedCurrencies[0]
+	if contract.BuyerOrder.Payment.Coin != "" {
+		paymentCoin = contract.BuyerOrder.Payment.Coin
+	}
+
 	defer stmt.Close()
 	_, err = stmt.Exec(
 		orderID,
@@ -76,9 +82,7 @@ func (p *PurchasesDB) Put(orderID string, contract pb.RicardianContract, state p
 		shippingAddress,
 		paymentAddr,
 		contract.VendorListings[0].Metadata.CoinType,
-
-		// TODO: Figure out which coin is the payment coin
-		"",
+		paymentCoin,
 	)
 	if err != nil {
 		tx.Rollback()

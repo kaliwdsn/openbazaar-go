@@ -66,6 +66,12 @@ func (s *SalesDB) Put(orderID string, contract pb.RicardianContract, state pb.Or
 	} else if contract.BuyerOrder.Payment.Method == pb.Order_Payment_ADDRESS_REQUEST {
 		address = contract.VendorOrderConfirmation.PaymentAddress
 	}
+
+	paymentCoin := contract.VendorListings[0].Metadata.AcceptedCurrencies[0]
+	if contract.BuyerOrder.Payment.Coin != "" {
+		paymentCoin = contract.BuyerOrder.Payment.Coin
+	}
+
 	defer stmt.Close()
 	_, err = stmt.Exec(
 		orderID,
@@ -82,9 +88,7 @@ func (s *SalesDB) Put(orderID string, contract pb.RicardianContract, state pb.Or
 		shippingAddress,
 		address,
 		contract.VendorListings[0].Metadata.CoinType,
-
-		// TODO: Figure out which coin is the payment coin
-		"",
+		paymentCoin,
 	)
 	if err != nil {
 		tx.Rollback()

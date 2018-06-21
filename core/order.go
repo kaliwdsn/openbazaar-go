@@ -87,6 +87,7 @@ func (n *OpenBazaarNode) Purchase(data *PurchaseData) (orderId string, paymentAd
 		payment := new(pb.Order_Payment)
 		payment.Method = pb.Order_Payment_MODERATED
 		payment.Moderator = data.Moderator
+		payment.Coin = NormalizeCurrencyCode(n.Wallet.CurrencyCode())
 
 		ipnsPath := ipfspath.FromString(data.Moderator + "/profile.json")
 		profileBytes, err := n.IPNSResolveThenCat(ipnsPath, time.Minute)
